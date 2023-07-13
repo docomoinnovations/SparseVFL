@@ -7,7 +7,7 @@
 # 2. Save the zip as ```data/original/wine-quality/wine+quality.zip```
 # 3. ```cd data/original/wine-quality```
 # 4. ```unzip wine+quality.zip```
-
+# 5. ```cd ../../../```
 
 
 # Citation Request:

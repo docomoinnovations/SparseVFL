@@ -7,7 +7,7 @@
 # 2. Save the zip as ```data/original/adult/adult.zip```
 # 3. ```cd data/original/adult```
 # 4. ```unzip adult.zip```
-
+# 5. ```cd ../../../```
 
 
 # | This data was extracted from the census bureau database found at

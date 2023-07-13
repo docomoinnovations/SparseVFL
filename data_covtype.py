@@ -7,8 +7,8 @@
 # 2. Save the zip as ```data/original/covtype/covertype.zip```
 # 3. ```cd data/original/covtype```
 # 4. ```unzip covertype.zip```
-# 5. ```gzip -d covertype.data.gz```
-
+# 5. ```gzip -d covtype.data.gz```
+# 6. ```cd ../../../```
 
 
 # The Forest CoverType dataset
@@ -333,7 +333,7 @@ import os
 
 dat = pd.read_csv('data/original/covtype/covtype.data', header=None)
 
-outdir = 'data/covtype32'
+outdir = 'data/covtype3'
 os.makedirs(outdir, exist_ok=True)
 
 

@@ -250,7 +250,7 @@ print(device)
 model_header = args.model_header
 comm_dir = f'comm_{model_header}'
 os.makedirs(comm_dir, exist_ok=True)
-
+os.makedirs(model_dir, exist_ok=True)
 
 # Server data
 print(tr_uid) # UserID, Common

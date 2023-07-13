@@ -21,7 +21,8 @@ This repository contains the source code of Python/PyTorch scripts for Vertical 
 2. Save the zip as ```data/original/adult/adult.zip```
 3. ```cd data/original/adult```
 4. ```unzip adult.zip```
-5. Run the following python scripts
+5. ```cd ../../../```
+6. Run the following python scripts
 
 ```shell
 python data_adult.py
