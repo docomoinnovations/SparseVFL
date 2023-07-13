@@ -2,7 +2,7 @@
 This repository contains the source code of Python/PyTorch scripts for Vertical Federated Learning. See our paper for a detailed description of SparseVFL.
 
 > **SparseVFL: Communication-Efficient Vertical Federated Learning Based on Sparsification of Embeddings and Gradients** <br/>
-> *<u>Yoshitaka Inoue</u>, Hiroki Moriya, Qiong Zhang, Kris Skrinak* <br/>
+> *Yoshitaka Inoue, Hiroki Moriya, Qiong Zhang, Kris Skrinak* <br/>
 > Paper: https://openreview.net/forum?id=BVH3-XCRoN3 <br/>
 > Accepted by: [KDD FL4Data-Mining '23: International Workshop on Federated Learning for Distributed Data Mining](https://fl4data-mining.github.io/)<br/>
 > Published on: August 7, 2023
@@ -23,7 +23,7 @@ This repository contains the source code of Python/PyTorch scripts for Vertical 
 4. ```unzip adult.zip```
 5. Run the following python scripts
 
-```python
+```shell
 python data_adult.py
 python sparsevfl.py --layer_no_bias --sparse_embed_lambda 0.0100 --interface_dims 8,8,8 --reduction svfl16 --model_header sparsevfl_adult3 --data_dir /mnt/share/data/adult3 --lr 0.01 --tsv_name result_1.tsv
 ```
@@ -58,7 +58,7 @@ url={https://openreview.net/forum?id=BVH3-XCRoN3}
 ```
 
 ## Contact
-- <u>Yoshitaka Inoue</u> (yoshitaka.inoue@docomoinnovations.com), DOCOMO Innovations
+- **Yoshitaka Inoue** (yoshitaka.inoue@docomoinnovations.com), DOCOMO Innovations
 - Hiroki Moriya (hiroki.moriya@docomoinnovations.com), DOCOMO Innovations
 - Qiong Zhang (zhangyqi@amazon.com), Amazon Web Services
 - Kris Skrinak (skrinak@amazon.com), Amazon Web Services
