@@ -41,6 +41,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir',    type=str, default='data/adult3', help='')
 parser.add_argument('--model_dir',   type=str, default='models', help='')
+parser.add_argument('--log_dir',   type=str, default='runs', help='')
 parser.add_argument('--log_comment', type=str, default='', help='')
 parser.add_argument('--gpu_id',      type=int, default=0, help='')
 parser.add_argument('--seed',        type=int, default=42, help='')
@@ -1309,6 +1310,14 @@ for epoch in range(n_epochs):
     writer.add_scalar('stat_size/epoch_size_receive_2',  epoch_size_receive_2, epoch)
     writer.add_scalar('stat_size/epoch_size_receive_3',  epoch_size_receive_3, epoch)
     writer.add_scalar('stat_size/epoch_size_all', epoch_size_send_1 + epoch_size_send_2 + epoch_size_send_3 + epoch_size_receive_1 + epoch_size_receive_2 + epoch_size_receive_3, epoch)
+
+    writer.add_scalar('stat_size_t/epoch_size_send_1t',     epoch_size_send_1t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_send_2t',     epoch_size_send_2t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_send_3t',     epoch_size_send_3t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_receive_1t',  epoch_size_receive_1t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_receive_2t',  epoch_size_receive_2t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_receive_3t',  epoch_size_receive_3t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_allt', epoch_size_send_1t + epoch_size_send_2t + epoch_size_send_3t + epoch_size_receive_1t + epoch_size_receive_2t + epoch_size_receive_3t, epoch)
 
     writer.add_scalar('reg/tr_sparse_embed_loss_x_lambda', sparse_embed_lambda * tr_sparse_embed_loss, epoch) # with sparse_lambda
     writer.add_scalar('reg/tr_embed_sparsity', tr_embed_sparsity, epoch)

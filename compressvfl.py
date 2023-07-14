@@ -31,6 +31,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir',    type=str, default='data/adult3', help='')
 parser.add_argument('--model_dir',   type=str, default='models', help='')
+parser.add_argument('--log_dir',   type=str, default='runs', help='')
 parser.add_argument('--log_comment', type=str, default='', help='')
 parser.add_argument('--gpu_id',      type=int, default=0, help='')
 parser.add_argument('--seed',        type=int, default=42, help='')
