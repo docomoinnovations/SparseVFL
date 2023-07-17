@@ -7,6 +7,8 @@ This repository contains the source code of Python/PyTorch scripts for Vertical 
 > Accepted by: [KDD FL4Data-Mining '23: International Workshop on Federated Learning for Distributed Data Mining](https://fl4data-mining.github.io/)<br/>
 > Published on: August 7, 2023
 
+![VFL architecture](_static/img/sparsevfl.png)
+
 ## Environment
 - python 3.8.11
 - torch 1.7.1+cu101
