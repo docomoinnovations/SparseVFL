@@ -28,7 +28,7 @@ This repository contains the source code of Python/PyTorch scripts for Vertical 
 
 ```shell
 python data_adult.py
-python sparsevfl.py --layer_no_bias --sparse_embed_lambda 0.0100 --interface_dims 8,8,8 --reduction svfl16 --model_header sparsevfl_adult3 --data_dir /mnt/share/data/adult3 --lr 0.01 --tsv_name result_1.tsv
+python sparsevfl.py --layer_no_bias --sparse_embed_lambda 0.0100 --interface_dims 8,8,8 --reduction svfl16 --model_header sparsevfl_adult3 --data_dir data/adult3 --lr 0.01 --tsv_name result_1.tsv
 ```
 
 ## Reproduce paper results
