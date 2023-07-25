@@ -1496,7 +1496,7 @@ elif args.data_format == 'aws':
     te_x1 = torch.FloatTensor(np.load(f"test/te_x_1.npy", allow_pickle=False))
     te_x2 = torch.FloatTensor(np.load(f"test/te_x_2.npy", allow_pickle=False))
     te_x3 = torch.FloatTensor(np.load(f"test/te_x_3.npy", allow_pickle=False))
-#     te_x4 = torch.FloatTensor(np.save(f"test/te_x_4.npy", allow_pickle=False))
+#     te_x4 = torch.FloatTensor(np.load(f"test/te_x_4.npy", allow_pickle=False))
     te_xcols1 = np.load(f"test/cols_1.npy", allow_pickle=False)
     te_xcols2 = np.load(f"test/cols_2.npy", allow_pickle=False)
     te_xcols2 = np.load(f"test/cols_3.npy", allow_pickle=False)
