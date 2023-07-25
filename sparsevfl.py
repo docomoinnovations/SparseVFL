@@ -40,6 +40,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_dir',    type=str, default='data/adult3', help='')
+parser.add_argument('--data_format',   type=str, default='paper', help='paper, aws')
 parser.add_argument('--model_dir',   type=str, default='models', help='')
 parser.add_argument('--log_dir',   type=str, default='runs', help='')
 parser.add_argument('--log_comment', type=str, default='', help='')
@@ -92,112 +93,161 @@ model_dir = args.model_dir
 #############################################
 # Dataset: Feature, Label, indices, feature_column, label_column
 #############################################
-tr_feature = pickle.load(open(f'{data_dir}/tr_feature_v3.pkl', 'rb'))
-va_feature = pickle.load(open(f'{data_dir}/va_feature_v3.pkl', 'rb'))
-
-tr_label = pickle.load(open(f'{data_dir}/tr_label_v3.pkl', 'rb'))
-va_label = pickle.load(open(f'{data_dir}/va_label_v3.pkl', 'rb'))
-
-tr_indices = pickle.load(open(f'{data_dir}/tr_indices_v3.pkl', 'rb'))
-va_indices = pickle.load(open(f'{data_dir}/va_indices_v3.pkl', 'rb'))
-
-tr_f_col = pickle.load(open(f'{data_dir}/tr_f_col_v3.pkl', 'rb'))
-va_f_col = pickle.load(open(f'{data_dir}/va_f_col_v3.pkl', 'rb'))
-
-tr_l_col = pickle.load(open(f'{data_dir}/tr_l_col_v3.pkl', 'rb'))
-va_l_col = pickle.load(open(f'{data_dir}/va_l_col_v3.pkl', 'rb'))
-
-
-for tr_f in tr_feature:
-    print(tr_f.shape)
-for tr_l in tr_label:
-    print(tr_l.shape)
-
-class Dataset3(Dataset):
-    def __init__(self, feature_list, label, indices, xcols_list, ycols):
-        
-        self.client_count = len(feature_list)
-        
-        for i in range(self.client_count):
-            if i==0:
-                f = feature_list[i][xcols_list[i]]
-            else:
-                f = pd.merge(
-                    f,
-                    feature_list[i][xcols_list[i]],
-                    left_index=True, right_index=True,
-                    how = 'left'
-                ).fillna(0)
-        
-        self.x_list = []
-        self.xcols_list = []
-        for i in range(self.client_count):
-            self.x_list.append(torch.Tensor(f[xcols_list[i]].values))
-            self.xcols_list.append(xcols_list[i])
-            
-        self.y = torch.Tensor(label[ycols].values)
-        self.indices = indices
-        self.ycols = ycols
-        
-        # for binary-class BCEWithLogitLoss
-        self.pos_weight = (self.y.shape[0] - self.y.sum()) / self.y.sum() # n0/n1 as scalar
-        
-        # for multi-class CrossEntropyLoss
-        weight_table = label.value_counts().reset_index().sort_values(by=ycols[0])
-        weight_table.columns = [ycols[0], 'weight']
-        weight_table.weight = label.shape[0]/weight_table.weight
-        self.weight = torch.Tensor(weight_table.weight.values)
-
-    def __len__(self):
-        return self.x1.shape[0]
-
-    def __getitem__(self, idx):
-        x = []
-        for i in range(self.client_count):
-            x.append(self.x_list[i][idx,:])
-        return x, self.y[idx,:], self.indices[idx]
-
-
-    def get_xcols(self, i):
-        return self.xcols_list[i]
-    def get_ycols(self):
-        return self.ycols
-
-
 client_id_list = [int(i) for i in args.clients.split(',')]
 
+if args.data_format == 'paper':
+    '''
+    Load dataset
+    '''
+    tr_feature = pickle.load(open(f'{data_dir}/tr_feature_v3.pkl', 'rb'))
+    va_feature = pickle.load(open(f'{data_dir}/va_feature_v3.pkl', 'rb'))
 
-ds_tr = Dataset3(tr_feature, tr_label[client_id_list[0]], tr_indices[client_id_list[0]], tr_f_col, tr_l_col[client_id_list[0]])
-ds_va = Dataset3(va_feature, va_label[client_id_list[0]], va_indices[client_id_list[0]], va_f_col, va_l_col[client_id_list[0]])
+    tr_label = pickle.load(open(f'{data_dir}/tr_label_v3.pkl', 'rb'))
+    va_label = pickle.load(open(f'{data_dir}/va_label_v3.pkl', 'rb'))
 
-tr_uid = ds_tr.indices
-tr_x1 = ds_tr.x_list[client_id_list[0]]
-tr_x2 = ds_tr.x_list[client_id_list[1]]
-tr_x3 = ds_tr.x_list[client_id_list[2]]
-tr_xcols1 = ds_tr.xcols_list[client_id_list[0]]
-tr_xcols2 = ds_tr.xcols_list[client_id_list[1]]
-tr_xcols3 = ds_tr.xcols_list[client_id_list[2]]
-tr_y = ds_tr.y
+    tr_indices = pickle.load(open(f'{data_dir}/tr_indices_v3.pkl', 'rb'))
+    va_indices = pickle.load(open(f'{data_dir}/va_indices_v3.pkl', 'rb'))
 
-if args.loss=='bcewll':
-    pos_weight = ds_tr.pos_weight
-elif args.loss=='ce':
-    weight=ds_tr.weight
-else:
-    print('error')
+    tr_f_col = pickle.load(open(f'{data_dir}/tr_f_col_v3.pkl', 'rb'))
+    va_f_col = pickle.load(open(f'{data_dir}/va_f_col_v3.pkl', 'rb'))
 
-
-va_uid = ds_va.indices
-va_x1 = ds_va.x_list[client_id_list[0]]
-va_x2 = ds_va.x_list[client_id_list[1]]
-va_x3 = ds_va.x_list[client_id_list[2]]
-va_xcols1 = ds_va.xcols_list[client_id_list[0]]
-va_xcols2 = ds_va.xcols_list[client_id_list[1]]
-va_xcols3 = ds_va.xcols_list[client_id_list[2]]
-va_y = ds_va.y
+    tr_l_col = pickle.load(open(f'{data_dir}/tr_l_col_v3.pkl', 'rb'))
+    va_l_col = pickle.load(open(f'{data_dir}/va_l_col_v3.pkl', 'rb'))
 
 
+    for tr_f in tr_feature:
+        print(tr_f.shape)
+    for tr_l in tr_label:
+        print(tr_l.shape)
 
+    class Dataset3(Dataset):
+        def __init__(self, feature_list, label, indices, xcols_list, ycols):
+
+            self.client_count = len(feature_list)
+
+            for i in range(self.client_count):
+                if i==0:
+                    f = feature_list[i][xcols_list[i]]
+                else:
+                    f = pd.merge(
+                        f,
+                        feature_list[i][xcols_list[i]],
+                        left_index=True, right_index=True,
+                        how = 'left'
+                    ).fillna(0)
+
+            self.x_list = []
+            self.xcols_list = []
+            for i in range(self.client_count):
+                self.x_list.append(torch.Tensor(f[xcols_list[i]].values))
+                self.xcols_list.append(xcols_list[i])
+
+            self.y = torch.Tensor(label[ycols].values)
+            self.indices = indices
+            self.ycols = ycols
+
+            # for binary-class BCEWithLogitLoss
+            self.pos_weight = (self.y.shape[0] - self.y.sum()) / self.y.sum() # n0/n1 as scalar
+
+            # for multi-class CrossEntropyLoss
+            weight_table = label.value_counts().reset_index().sort_values(by=ycols[0])
+            weight_table.columns = [ycols[0], 'weight']
+            weight_table.weight = label.shape[0]/weight_table.weight
+            self.weight = torch.Tensor(weight_table.weight.values)
+
+        def __len__(self):
+            return self.x1.shape[0]
+
+        def __getitem__(self, idx):
+            x = []
+            for i in range(self.client_count):
+                x.append(self.x_list[i][idx,:])
+            return x, self.y[idx,:], self.indices[idx]
+
+
+        def get_xcols(self, i):
+            return self.xcols_list[i]
+        def get_ycols(self):
+            return self.ycols
+
+
+    
+
+
+    ds_tr = Dataset3(tr_feature, tr_label[client_id_list[0]], tr_indices[client_id_list[0]], tr_f_col, tr_l_col[client_id_list[0]])
+    ds_va = Dataset3(va_feature, va_label[client_id_list[0]], va_indices[client_id_list[0]], va_f_col, va_l_col[client_id_list[0]])
+
+    tr_uid = ds_tr.indices
+    tr_x1 = ds_tr.x_list[client_id_list[0]]
+    tr_x2 = ds_tr.x_list[client_id_list[1]]
+    tr_x3 = ds_tr.x_list[client_id_list[2]]
+    tr_xcols1 = ds_tr.xcols_list[client_id_list[0]]
+    tr_xcols2 = ds_tr.xcols_list[client_id_list[1]]
+    tr_xcols3 = ds_tr.xcols_list[client_id_list[2]]
+    tr_y = ds_tr.y
+
+    if args.loss=='bcewll':
+        pos_weight = ds_tr.pos_weight
+    elif args.loss=='ce':
+        weight=ds_tr.weight
+    else:
+        print('error')
+
+
+    va_uid = ds_va.indices
+    va_x1 = ds_va.x_list[client_id_list[0]]
+    va_x2 = ds_va.x_list[client_id_list[1]]
+    va_x3 = ds_va.x_list[client_id_list[2]]
+    va_xcols1 = ds_va.xcols_list[client_id_list[0]]
+    va_xcols2 = ds_va.xcols_list[client_id_list[1]]
+    va_xcols3 = ds_va.xcols_list[client_id_list[2]]
+    va_y = ds_va.y
+    
+    
+elif args.data_format == 'aws':
+    '''
+    Load the same dataset as https://github.com/docomoinnovations/AWS-Serverless-Vertical-Federated-Learning/blob/main/init_data.py
+    This code accepts only three clients and commented out client-4.
+    '''
+    
+    print('Load the same dataset as AWS')
+
+    # Common
+    tr_uid = torch.LongTensor(np.load(f"server/functions/init_server/tr_uid.npy", allow_pickle=False))
+    va_uid = torch.LongTensor(np.load(f"server/functions/init_server/va_uid.npy", allow_pickle=False))
+
+    # Client
+    tr_x1 = torch.FloatTensor(np.load(f"client/dataset/client1/tr_x.npy", allow_pickle=False))
+    tr_x2 = torch.FloatTensor(np.load(f"client/dataset/client2/tr_x.npy", allow_pickle=False))
+    tr_x3 = torch.FloatTensor(np.load(f"client/dataset/client3/tr_x.npy", allow_pickle=False))
+#     tr_x4 = torch.FloatTensor(np.load(f"client/dataset/client4/tr_x.npy", allow_pickle=False))
+    tr_xcols1 = np.load(f"client/dataset/client1/cols.npy", allow_pickle=False)
+    tr_xcols2 = np.load(f"client/dataset/client2/cols.npy", allow_pickle=False)
+    tr_xcols3 = np.load(f"client/dataset/client3/cols.npy", allow_pickle=False)
+#     tr_xcols4 = np.load(f"client/dataset/client4/cols.npy", allow_pickle=False)
+    va_x1 = torch.FloatTensor(np.load(f"client/dataset/client1/va_x.npy", allow_pickle=False))
+    va_x2 = torch.FloatTensor(np.load(f"client/dataset/client2/va_x.npy", allow_pickle=False))
+    va_x3 = torch.FloatTensor(np.load(f"client/dataset/client3/va_x.npy", allow_pickle=False))
+#     va_x4 = torch.FloatTensor(np.load(f"client/dataset/client4/va_x.npy", allow_pickle=False))
+    va_xcols1 = np.load(f"client/dataset/client1/cols.npy", allow_pickle=False)
+    va_xcols2 = np.load(f"client/dataset/client2/cols.npy", allow_pickle=False)
+    va_xcols3 = np.load(f"client/dataset/client3/cols.npy", allow_pickle=False)
+#     va_xcols4 = np.load(f"client/dataset/client4/cols.npy", allow_pickle=False)
+
+
+    # Server
+    tr_y = torch.Tensor(np.load(f"server/functions/server_training/tr_y.npy", allow_pickle=False))
+    va_y = torch.Tensor(np.load(f"server/functions/server_training/va_y.npy", allow_pickle=False))
+    
+    if args.loss=='bcewll':
+        # for binary-class BCEWithLogitLoss
+        pos_weight = (tr_y.shape[0] - tr_y.sum()) / tr_y.sum() # n0/n1 as scalar
+    elif args.loss=='ce':
+        # for multi-class CrossEntropyLoss
+        label, label_count = np.unique(tr_y.flatten().numpy(), return_counts=True)
+        weight = torch.Tensor(label_count.sum()/label_count)
+    else:
+        print('error')
 
 
 
@@ -1421,22 +1471,39 @@ print(f'{model_dir}/{model_header}_client_model_2.pt')
 print(f'{model_dir}/{model_header}_client_model_3.pt')
 
 # Test data
-te_feature = pickle.load(open(f'{data_dir}/te_feature_v3.pkl', 'rb'))
-te_label   = pickle.load(open(f'{data_dir}/te_label_v3.pkl', 'rb'))
-te_indices = pickle.load(open(f'{data_dir}/te_indices_v3.pkl', 'rb'))
-te_f_col   = pickle.load(open(f'{data_dir}/te_f_col_v3.pkl', 'rb'))
-te_l_col   = pickle.load(open(f'{data_dir}/te_l_col_v3.pkl', 'rb'))
-ds_te = Dataset3(te_feature, te_label[0], te_indices[0], te_f_col, te_l_col[0])
+if args.data_format == 'paper':
+    te_feature = pickle.load(open(f'{data_dir}/te_feature_v3.pkl', 'rb'))
+    te_label   = pickle.load(open(f'{data_dir}/te_label_v3.pkl', 'rb'))
+    te_indices = pickle.load(open(f'{data_dir}/te_indices_v3.pkl', 'rb'))
+    te_f_col   = pickle.load(open(f'{data_dir}/te_f_col_v3.pkl', 'rb'))
+    te_l_col   = pickle.load(open(f'{data_dir}/te_l_col_v3.pkl', 'rb'))
+    ds_te = Dataset3(te_feature, te_label[0], te_indices[0], te_f_col, te_l_col[0])
 
-te_uid = ds_te.indices
-te_x1 = ds_te.x_list[0]
-te_x2 = ds_te.x_list[1]
-te_x3 = ds_te.x_list[2]
-te_xcols1 = ds_te.xcols_list[0]
-te_xcols2 = ds_te.xcols_list[1]
-te_xcols3 = ds_te.xcols_list[2]
-te_y = ds_te.y
+    te_uid = ds_te.indices
+    te_x1 = ds_te.x_list[0]
+    te_x2 = ds_te.x_list[1]
+    te_x3 = ds_te.x_list[2]
+    te_xcols1 = ds_te.xcols_list[0]
+    te_xcols2 = ds_te.xcols_list[1]
+    te_xcols3 = ds_te.xcols_list[2]
+    te_y = ds_te.y
 
+elif args.data_format == 'aws':
+    # Common
+    te_uid = torch.LongTensor(np.load("test/te_uid.npy", allow_pickle=False))
+    
+    # Client
+    te_x1 = torch.FloatTensor(np.load(f"test/te_x_1.npy", allow_pickle=False))
+    te_x2 = torch.FloatTensor(np.load(f"test/te_x_2.npy", allow_pickle=False))
+    te_x3 = torch.FloatTensor(np.load(f"test/te_x_3.npy", allow_pickle=False))
+#     te_x4 = torch.FloatTensor(np.save(f"test/te_x_4.npy", allow_pickle=False))
+    te_xcols1 = np.load(f"test/cols_1.npy", allow_pickle=False)
+    te_xcols2 = np.load(f"test/cols_2.npy", allow_pickle=False)
+    te_xcols2 = np.load(f"test/cols_3.npy", allow_pickle=False)
+#     te_xcols4 = np.load(f"test/cols_4.npy", allow_pickle=False)
+
+    # Server
+    te_y = torch.Tensor(np.load("test/te_y.npy", allow_pickle=False))
 
 ###################
 # Common
