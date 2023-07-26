@@ -213,31 +213,31 @@ elif args.data_format == 'aws':
     print('Load the same dataset as AWS')
 
     # Common
-    tr_uid = torch.LongTensor(np.load(f"server/functions/init_server/tr_uid.npy", allow_pickle=False))
-    va_uid = torch.LongTensor(np.load(f"server/functions/init_server/va_uid.npy", allow_pickle=False))
+    tr_uid = torch.LongTensor(np.load(f"{data_dir}/server/functions/init_server/tr_uid.npy", allow_pickle=False))
+    va_uid = torch.LongTensor(np.load(f"{data_dir}/server/functions/init_server/va_uid.npy", allow_pickle=False))
 
     # Client
-    tr_x1 = torch.FloatTensor(np.load(f"client/dataset/client1/tr_x.npy", allow_pickle=False))
-    tr_x2 = torch.FloatTensor(np.load(f"client/dataset/client2/tr_x.npy", allow_pickle=False))
-    tr_x3 = torch.FloatTensor(np.load(f"client/dataset/client3/tr_x.npy", allow_pickle=False))
-#     tr_x4 = torch.FloatTensor(np.load(f"client/dataset/client4/tr_x.npy", allow_pickle=False))
-    tr_xcols1 = np.load(f"client/dataset/client1/cols.npy", allow_pickle=False)
-    tr_xcols2 = np.load(f"client/dataset/client2/cols.npy", allow_pickle=False)
-    tr_xcols3 = np.load(f"client/dataset/client3/cols.npy", allow_pickle=False)
-#     tr_xcols4 = np.load(f"client/dataset/client4/cols.npy", allow_pickle=False)
-    va_x1 = torch.FloatTensor(np.load(f"client/dataset/client1/va_x.npy", allow_pickle=False))
-    va_x2 = torch.FloatTensor(np.load(f"client/dataset/client2/va_x.npy", allow_pickle=False))
-    va_x3 = torch.FloatTensor(np.load(f"client/dataset/client3/va_x.npy", allow_pickle=False))
-#     va_x4 = torch.FloatTensor(np.load(f"client/dataset/client4/va_x.npy", allow_pickle=False))
-    va_xcols1 = np.load(f"client/dataset/client1/cols.npy", allow_pickle=False)
-    va_xcols2 = np.load(f"client/dataset/client2/cols.npy", allow_pickle=False)
-    va_xcols3 = np.load(f"client/dataset/client3/cols.npy", allow_pickle=False)
-#     va_xcols4 = np.load(f"client/dataset/client4/cols.npy", allow_pickle=False)
+    tr_x1 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client1/tr_x.npy", allow_pickle=False))
+    tr_x2 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client2/tr_x.npy", allow_pickle=False))
+    tr_x3 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client3/tr_x.npy", allow_pickle=False))
+#     tr_x4 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client4/tr_x.npy", allow_pickle=False))
+    tr_xcols1 = np.load(f"{data_dir}/client/dataset/client1/cols.npy", allow_pickle=False)
+    tr_xcols2 = np.load(f"{data_dir}/client/dataset/client2/cols.npy", allow_pickle=False)
+    tr_xcols3 = np.load(f"{data_dir}/client/dataset/client3/cols.npy", allow_pickle=False)
+#     tr_xcols4 = np.load(f"{data_dir}/client/dataset/client4/cols.npy", allow_pickle=False)
+    va_x1 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client1/va_x.npy", allow_pickle=False))
+    va_x2 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client2/va_x.npy", allow_pickle=False))
+    va_x3 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client3/va_x.npy", allow_pickle=False))
+#     va_x4 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client4/va_x.npy", allow_pickle=False))
+    va_xcols1 = np.load(f"{data_dir}/client/dataset/client1/cols.npy", allow_pickle=False)
+    va_xcols2 = np.load(f"{data_dir}/client/dataset/client2/cols.npy", allow_pickle=False)
+    va_xcols3 = np.load(f"{data_dir}/client/dataset/client3/cols.npy", allow_pickle=False)
+#     va_xcols4 = np.load(f"{data_dir}/client/dataset/client4/cols.npy", allow_pickle=False)
 
 
     # Server
-    tr_y = torch.Tensor(np.load(f"server/functions/server_training/tr_y.npy", allow_pickle=False))
-    va_y = torch.Tensor(np.load(f"server/functions/server_training/va_y.npy", allow_pickle=False))
+    tr_y = torch.Tensor(np.load(f"{data_dir}/server/functions/server_training/tr_y.npy", allow_pickle=False))
+    va_y = torch.Tensor(np.load(f"{data_dir}/server/functions/server_training/va_y.npy", allow_pickle=False))
     
     if args.loss=='bcewll':
         # for binary-class BCEWithLogitLoss
@@ -1490,20 +1490,20 @@ if args.data_format == 'paper':
 
 elif args.data_format == 'aws':
     # Common
-    te_uid = torch.LongTensor(np.load("test/te_uid.npy", allow_pickle=False))
+    te_uid = torch.LongTensor(np.load(f"{data_dir}/test/te_uid.npy", allow_pickle=False))
     
     # Client
-    te_x1 = torch.FloatTensor(np.load(f"test/te_x_1.npy", allow_pickle=False))
-    te_x2 = torch.FloatTensor(np.load(f"test/te_x_2.npy", allow_pickle=False))
-    te_x3 = torch.FloatTensor(np.load(f"test/te_x_3.npy", allow_pickle=False))
-#     te_x4 = torch.FloatTensor(np.load(f"test/te_x_4.npy", allow_pickle=False))
-    te_xcols1 = np.load(f"test/cols_1.npy", allow_pickle=False)
-    te_xcols2 = np.load(f"test/cols_2.npy", allow_pickle=False)
-    te_xcols3 = np.load(f"test/cols_3.npy", allow_pickle=False)
-#     te_xcols4 = np.load(f"test/cols_4.npy", allow_pickle=False)
+    te_x1 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_1.npy", allow_pickle=False))
+    te_x2 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_2.npy", allow_pickle=False))
+    te_x3 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_3.npy", allow_pickle=False))
+#     te_x4 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_4.npy", allow_pickle=False))
+    te_xcols1 = np.load(f"{data_dir}/test/cols_1.npy", allow_pickle=False)
+    te_xcols2 = np.load(f"{data_dir}/test/cols_2.npy", allow_pickle=False)
+    te_xcols3 = np.load(f"{data_dir}/test/cols_3.npy", allow_pickle=False)
+#     te_xcols4 = np.load(f"{data_dir}/test/cols_4.npy", allow_pickle=False)
 
     # Server
-    te_y = torch.Tensor(np.load("test/te_y.npy", allow_pickle=False))
+    te_y = torch.Tensor(np.load(f"{data_dir}/test/te_y.npy", allow_pickle=False))
 
 ###################
 # Common
