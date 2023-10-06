@@ -16,7 +16,7 @@
 # |  | |  |\   | |  `--'  | |  `--'  | |  |____ 
 # |__| |__| \__|  \______/   \______/  |_______|
 # yoshitaka.inoue@docomoinnovations.com
-# 2023.06.30
+# 2023.10.06
                                               
 
 import os
@@ -48,7 +48,7 @@ parser.add_argument('--gpu_id',      type=int, default=0, help='')
 parser.add_argument('--seed',        type=int, default=42, help='')
 
 parser.add_argument('--model_header', type=str, default='vfl_v7', help='')
-parser.add_argument('--clients',      type=str, default='0,1,2', help='')
+parser.add_argument('--clients',      type=str, default='1,2,3', help='')
 
 parser.add_argument('--interface_dims',       type=str, default='8,8,8', help='')
 parser.add_argument('--lr',         type=float, default=0.01, help='')
@@ -178,12 +178,11 @@ if args.data_format == 'paper':
     ds_va = Dataset3(va_feature, va_label[client_id_list[0]], va_indices[client_id_list[0]], va_f_col, va_l_col[client_id_list[0]])
 
     tr_uid = ds_tr.indices
-    tr_x1 = ds_tr.x_list[client_id_list[0]]
-    tr_x2 = ds_tr.x_list[client_id_list[1]]
-    tr_x3 = ds_tr.x_list[client_id_list[2]]
-    tr_xcols1 = ds_tr.xcols_list[client_id_list[0]]
-    tr_xcols2 = ds_tr.xcols_list[client_id_list[1]]
-    tr_xcols3 = ds_tr.xcols_list[client_id_list[2]]
+    tr_x = []
+    tr_xcols = []
+    for i in range(len(client_id_list)): 
+        tr_x.append(ds_tr.x_list[i])
+        tr_xcols.append(ds_tr.xcols_list[i])
     tr_y = ds_tr.y
 
     if args.loss=='bcewll':
@@ -195,19 +194,18 @@ if args.data_format == 'paper':
 
 
     va_uid = ds_va.indices
-    va_x1 = ds_va.x_list[client_id_list[0]]
-    va_x2 = ds_va.x_list[client_id_list[1]]
-    va_x3 = ds_va.x_list[client_id_list[2]]
-    va_xcols1 = ds_va.xcols_list[client_id_list[0]]
-    va_xcols2 = ds_va.xcols_list[client_id_list[1]]
-    va_xcols3 = ds_va.xcols_list[client_id_list[2]]
+    va_x = []
+    va_xcols = []
+    for i in range(len(client_id_list)):
+        va_x.append(ds_va.x_list[i])
+        va_xcols.append(ds_va.xcols_list[i])
     va_y = ds_va.y
     
     
 elif args.data_format == 'aws':
     '''
     Load the same dataset as https://github.com/docomoinnovations/AWS-Serverless-Vertical-Federated-Learning/blob/main/init_data.py
-    This code accepts only three clients and commented out client-4.
+    This code accepts any number of clients.
     '''
     
     print('Load the same dataset as AWS')
@@ -217,24 +215,17 @@ elif args.data_format == 'aws':
     va_uid = torch.LongTensor(np.load(f"{data_dir}/server/functions/init_server/va_uid.npy", allow_pickle=False))
 
     # Client
-    tr_x1 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client1/tr_x.npy", allow_pickle=False))
-    tr_x2 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client2/tr_x.npy", allow_pickle=False))
-    tr_x3 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client3/tr_x.npy", allow_pickle=False))
-#     tr_x4 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client4/tr_x.npy", allow_pickle=False))
-    tr_xcols1 = np.load(f"{data_dir}/client/dataset/client1/cols.npy", allow_pickle=False)
-    tr_xcols2 = np.load(f"{data_dir}/client/dataset/client2/cols.npy", allow_pickle=False)
-    tr_xcols3 = np.load(f"{data_dir}/client/dataset/client3/cols.npy", allow_pickle=False)
-#     tr_xcols4 = np.load(f"{data_dir}/client/dataset/client4/cols.npy", allow_pickle=False)
-    va_x1 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client1/va_x.npy", allow_pickle=False))
-    va_x2 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client2/va_x.npy", allow_pickle=False))
-    va_x3 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client3/va_x.npy", allow_pickle=False))
-#     va_x4 = torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client4/va_x.npy", allow_pickle=False))
-    va_xcols1 = np.load(f"{data_dir}/client/dataset/client1/cols.npy", allow_pickle=False)
-    va_xcols2 = np.load(f"{data_dir}/client/dataset/client2/cols.npy", allow_pickle=False)
-    va_xcols3 = np.load(f"{data_dir}/client/dataset/client3/cols.npy", allow_pickle=False)
-#     va_xcols4 = np.load(f"{data_dir}/client/dataset/client4/cols.npy", allow_pickle=False)
-
-
+    tr_x =[]
+    tr_xcols=[]
+    va_x = []
+    va_xcols = []
+    for i in client_id_list:
+        # aws format assumes client_id_list=1,2,3
+        tr_x.append(torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client{i}/tr_x.npy", allow_pickle=False)))
+        tr_xcols.append(np.load(f"{data_dir}/client/dataset/client{i}/cols.npy", allow_pickle=False))
+        va_x.append(torch.FloatTensor(np.load(f"{data_dir}/client/dataset/client{i}/va_x.npy", allow_pickle=False)))
+        va_xcols.append(np.load(f"{data_dir}/client/dataset/client{i}/cols.npy", allow_pickle=False))
+        
     # Server
     tr_y = torch.Tensor(np.load(f"{data_dir}/server/functions/server_training/tr_y.npy", allow_pickle=False))
     va_y = torch.Tensor(np.load(f"{data_dir}/server/functions/server_training/va_y.npy", allow_pickle=False))
@@ -710,31 +701,15 @@ print(va_uid) # UserID, Common
 print(va_y.shape)
 
 
-# Client 1 data
-print(tr_uid) # UserID, Common
-print(tr_x1.shape) # Data
-print(tr_xcols1) # Columns
-print(va_uid) # UserID, Common
-print(va_x1.shape) # Data
-print(va_xcols1) # Columns
-
-
-# Client 2 data
-print(tr_uid) #  UserID, Common
-print(tr_x2.shape) # Data
-print(tr_xcols2) # Columns
-print(va_uid) #  UserID, Common
-print(va_x2.shape) # Data
-print(va_xcols2) # Columns
-
-
-# Client 3 data
-print(tr_uid) # UserID, Common
-print(tr_x3.shape) # Data
-print(tr_xcols3) # Columns
-print(va_uid) # UserID, Common
-print(va_x3.shape) # Data
-print(va_xcols3) # Columns
+for i in range(len(tr_x)):    
+    # Client data
+    print(client_id_list[i])
+    print(tr_uid) # UserID, Common
+    print(tr_x[i].shape) # Data
+    print(tr_xcols[i]) # Columns
+    print(va_uid) # UserID, Common
+    print(va_x[i].shape) # Data
+    print(va_xcols[i]) # Columns
 
 
 # Server information
@@ -757,9 +732,9 @@ sparse_embed_lambda = args.sparse_embed_lambda
 
 # Common information
 lr = args.lr
-dim_1 = int(args.interface_dims.split(',')[client_id_list[0]])
-dim_2 = int(args.interface_dims.split(',')[client_id_list[1]])
-dim_3 = int(args.interface_dims.split(',')[client_id_list[2]])
+dim = []
+for i in range(len(client_id_list)):
+    dim.append(int(args.interface_dims.split(',')[i]))
 
 
 # Information sent to clients from server
@@ -841,46 +816,26 @@ class ServerModel(torch.nn.Module):
 #############################################
 # Training
 #############################################
+client_model = []
+client_optimizer = []
 ###################
-# Client 1
+# Client 
 ###################
-client_model_1 = ClientModel(len(tr_xcols1), dim_1)
-client_model_1 = client_model_1.to(device)
-if args.client_optimizer=='adam':
-    optimizer_1 = torch.optim.Adam(client_model_1.parameters(), lr=lr)
-elif args.client_optimizer=='sgd':
-    optimizer_1 = torch.optim.SGD(client_model_1.parameters(), lr=lr)
-elif args.client_optimizer=='rmsprop':
-    optimizer_1 = torch.optim.RMSprop(client_model_1.parameters(), lr=lr)
+for i in range(len(client_id_list)):
     
-###################
-# Client 2
-###################
-client_model_2 = ClientModel(len(tr_xcols2), dim_2)
-client_model_2 = client_model_2.to(device)
-if args.client_optimizer=='adam':
-    optimizer_2 = torch.optim.Adam(client_model_2.parameters(), lr=lr)
-elif args.client_optimizer=='sgd':
-    optimizer_2 = torch.optim.SGD(client_model_2.parameters(), lr=lr)
-elif args.client_optimizer=='rmsprop':
-    optimizer_2 = torch.optim.RMSprop(client_model_2.parameters(), lr=lr)
-
-###################
-# Client 3
-###################
-client_model_3 = ClientModel(len(tr_xcols3), dim_3)
-client_model_3 = client_model_3.to(device)
-if args.client_optimizer=='adam':
-    optimizer_3 = torch.optim.Adam(client_model_3.parameters(), lr=lr)
-elif args.client_optimizer=='sgd':
-    optimizer_3 = torch.optim.SGD(client_model_3.parameters(), lr=lr)
-elif args.client_optimizer=='rmsprop':
-    optimizer_3 = torch.optim.RMSprop(client_model_3.parameters(), lr=lr)
+    client_model.append(ClientModel(len(tr_xcols[i]), dim[i]))
+    client_model[i] = client_model[i].to(device)
+    if args.client_optimizer=='adam':
+        client_optimizer.append(torch.optim.Adam(client_model[i].parameters(), lr=lr))
+    elif args.client_optimizer=='sgd':
+        client_optimizer.append(torch.optim.SGD(client_model[i].parameters(), lr=lr))
+    elif args.client_optimizer=='rmsprop':
+        client_optimizer.append(torch.optim.RMSprop(client_model[i].parameters(), lr=lr))
     
 ###################
 # Server
 ###################
-server_model = ServerModel([dim_1, dim_2, dim_3], args.out_size, 1)
+server_model = ServerModel(dim, args.out_size, 1)
 server_model = server_model.to(device)
 optimizer = torch.optim.Adam(server_model.parameters(), lr=lr)
 if args.loss=='bcewll':
@@ -900,32 +855,14 @@ best_va_score = -1
 start_time = time.time()
 writer = SummaryWriter(comment=args.log_comment)
 
-total_count_send_1 = 0
-total_count_send_2 = 0
-total_count_send_3 = 0
-total_count_receive_1 = 0
-total_count_receive_2 = 0
-total_count_receive_3 = 0
+total_count_send    = [0] * len(client_id_list)
+total_count_receive = [0] * len(client_id_list)
+total_size_send     = [0] * len(client_id_list)
+total_size_receive  = [0] * len(client_id_list)
+total_size_send_t   = [0] * len(client_id_list)
+total_size_receive_t= [0] * len(client_id_list)
+total_time          = [0] * len(client_id_list)
 
-# Practical size
-total_size_send_1 = 0
-total_size_send_2 = 0
-total_size_send_3 = 0
-total_size_receive_1 = 0
-total_size_receive_2 = 0
-total_size_receive_3 = 0
-
-# Theoretical size
-total_size_send_1t = 0
-total_size_send_2t = 0
-total_size_send_3t = 0
-total_size_receive_1t = 0
-total_size_receive_2t = 0
-total_size_receive_3t = 0
-
-total_time_1 = 0
-total_time_2 = 0
-total_time_3 = 0
 total_time_s = 0
 
 
@@ -944,47 +881,24 @@ for epoch in range(n_epochs):
     
     
     ###################
-    # Client 1
+    # Client 
     ###################
-    client_model_1.train()
+    for i in range(len(client_id_list)):
+        client_model[i].train()
     
-    ###################
-    # Client 2
-    ###################
-    client_model_2.train()
-    
-    ###################
-    # Client 3
-    ###################
-    client_model_3.train()
     
     ###################
     # Server
     ###################
     server_model.train()
     
-    epoch_count_send_1 = 0
-    epoch_count_send_2 = 0
-    epoch_count_send_3 = 0
-    epoch_count_receive_1 = 0
-    epoch_count_receive_2 = 0
-    epoch_count_receive_3 = 0
+    epoch_count_send     = [0] * len(client_id_list)
+    epoch_count_receive  = [0] * len(client_id_list)
+    epoch_size_send      = [0] * len(client_id_list)
+    epoch_size_receive   = [0] * len(client_id_list)
+    epoch_size_send_t    = [0] * len(client_id_list)
+    epoch_size_receive_t = [0] * len(client_id_list)
 
-    # Practical size
-    epoch_size_send_1 = 0
-    epoch_size_send_2 = 0
-    epoch_size_send_3 = 0
-    epoch_size_receive_1 = 0
-    epoch_size_receive_2 = 0
-    epoch_size_receive_3 = 0
-
-    # Theoretical size
-    epoch_size_send_1t = 0
-    epoch_size_send_2t = 0
-    epoch_size_send_3t = 0
-    epoch_size_receive_1t = 0
-    epoch_size_receive_2t = 0
-    epoch_size_receive_3t = 0
     
     tr_loss = 0
     tr_pred = np.zeros(tr_y.shape)
@@ -1009,40 +923,25 @@ for epoch in range(n_epochs):
         batch_uid = tr_uid[si]
         
         ###################
-        # Client 1: Send
+        # Client: Send
         ###################
-        st = time.time()
-        batch_x_1 = tr_x1[si,:].to(device)
-        optimizer_1.zero_grad()
-        emb_1 = client_model_1(batch_x_1)
         
-        ## Data reduction for embed
-        pos_1, size_e1t = reduce_encode_emb(emb_1, 1)
-        total_time_1 += (time.time() - st)
+        pos = []
+        size_et = []
+        emb = []
+        for i in range(len(client_id_list)):
+            st = time.time()
+            batch_x = tr_x[i][si,:].to(device)
+            client_optimizer[i].zero_grad()
+            emb.append(client_model[i](batch_x))
 
-        ###################
-        # Client 2: Send
-        ###################
-        st = time.time()
-        batch_x_2 = tr_x2[si,:].to(device)
-        optimizer_2.zero_grad()
-        emb_2 = client_model_2(batch_x_2)
-        
-        ## Data reduction for embed
-        pos_2, size_e2t = reduce_encode_emb(emb_2, 2)
-        total_time_2 += (time.time() - st)
+            ## Data reduction for embed
+            pos_i, size_eit = reduce_encode_emb(emb[i], client_id_list[i])
+            total_time[i] += (time.time() - st)
+            
+            pos.append(pos_i)
+            size_et.append(size_eit)
 
-        ###################
-        # Client 3: Send
-        ###################
-        st = time.time()
-        batch_x_3 = tr_x3[si,:].to(device)
-        optimizer_3.zero_grad()
-        emb_3 = client_model_3(batch_x_3)
-        
-        ## Data reduction for embed
-        pos_3, size_e3t = reduce_encode_emb(emb_3, 3)
-        total_time_3 += (time.time() - st)
             
         ###################
         # Server: Receive, Send
@@ -1050,51 +949,47 @@ for epoch in range(n_epochs):
         st = time.time()
         batch_y   = tr_y[si,:].to(device)
         optimizer.zero_grad()
-        e1, nz_pos_1 = reduce_decode_emb(1)
-        e2, nz_pos_2 = reduce_decode_emb(2)
-        e3, nz_pos_3 = reduce_decode_emb(3)
+        e = []
+        nz_pos = []
+        for i in range(len(client_id_list)):
+            ei, nz_pos_i = reduce_decode_emb(client_id_list[i])
+            e.append(ei)
+            nz_pos.append(nz_pos_i)
+            ei.requires_grad_(True) # Enable to get gradient
 
-        e1.requires_grad_(True) # Enable to get gradient
-        e2.requires_grad_(True) # Enable to get gradient
-        e3.requires_grad_(True) # Enable to get gradient
-        emb = torch.cat((e1, e2, e3), 1)
+        e_all = e[0].clone()
+        for i in range(1, len(client_id_list)):
+            e_all = torch.cat((e_all, e[i]), 1)
         
-        pred_y = server_model(emb)
+        pred_y = server_model(e_all)
         loss = criterion(pred_y, batch_y)
             
         ## L1-norm
         if sparse_embed_lambda > 0:
+            sparse_embed_loss = 0
             if args.norm == 1:
-                sparse_embed_loss_1 = torch.norm(e1, p=1, dim=1).mean() # L1 norm of each sample, mean over samples in 1 batch
-                sparse_embed_loss_2 = torch.norm(e2, p=1, dim=1).mean() # L1 norm of each sample, mean over samples in 1 batch
-                sparse_embed_loss_3 = torch.norm(e3, p=1, dim=1).mean() # L1 norm of each sample, mean over samples in 1 batch
+                for i in range(len(client_id_list)):
+                    sparse_embed_loss += torch.norm(e[i], p=1, dim=1).mean() # L1 norm of each sample, mean over samples in 1 batch
             else:
-                sparse_embed_loss_1 = torch.norm(e1, p=2, dim=1).mean() # L2 norm of each sample, mean over samples in 1 batch
-                sparse_embed_loss_2 = torch.norm(e2, p=2, dim=1).mean() # L2 norm of each sample, mean over samples in 1 batch
-                sparse_embed_loss_3 = torch.norm(e3, p=2, dim=1).mean() # L2 norm of each sample, mean over samples in 1 batch
+                for i in range(len(client_id_list)):
+                    sparse_embed_loss += torch.norm(e[i], p=2, dim=1).mean() # L2 norm of each sample, mean over samples in 1 batch
                 
-            loss = loss + sparse_embed_lambda * (sparse_embed_loss_1 + sparse_embed_loss_2 + sparse_embed_loss_3)/3.0
+            loss = loss + sparse_embed_lambda * sparse_embed_loss/3.0
 
             
         loss.backward()
         optimizer.step()
 
         ## Gradient of embed
-        ge1 = e1.grad 
-        ge2 = e2.grad 
-        ge3 = e3.grad
-        
-        size_g1t = reduce_encode_grad(ge1, nz_pos_1, 1)
-        size_g2t = reduce_encode_grad(ge2, nz_pos_2, 2)
-        size_g3t = reduce_encode_grad(ge3, nz_pos_3, 3)
-            
+        size_gt = []
+        for i in range(len(client_id_list)):
+            size_gt.append(reduce_encode_grad(e[i].grad, nz_pos[i], client_id_list[i]))
         
         ## Training results
         tr_loss += loss.item()
         if sparse_embed_lambda > 0:
-            tr_sparse_embed_loss += sparse_embed_loss_1.item()
-            tr_sparse_embed_loss += sparse_embed_loss_2.item()
-            tr_sparse_embed_loss += sparse_embed_loss_3.item()
+            tr_sparse_embed_loss += sparse_embed_loss.item()
+            
         if args.loss=='bcewll':
             tr_pred[head:tail,:] = torch.sigmoid(pred_y).detach().cpu().numpy()
             tr_true[head:tail,:] = batch_y.detach().cpu().numpy()
@@ -1107,68 +1002,35 @@ for epoch in range(n_epochs):
         total_time_s += (time.time() - st)
         
         ###################
-        # Client 1: Receive
+        # Client: Receive
         ###################
-        st = time.time()
-        ge1 = reduce_decode_grad(1, pos=pos_1)
-        emb_1.backward(ge1)
-        optimizer_1.step()
-        total_time_1 += (time.time() - st)
-        
-        ###################
-        # Client 2: Receive
-        ###################
-        st = time.time()
-        ge2 = reduce_decode_grad(2, pos=pos_2)
-        emb_2.backward(ge2)
-        optimizer_2.step()
-        total_time_2 += (time.time() - st)
-        
-        ###################
-        # Client 3: Receive
-        ###################
-        st = time.time()
-        ge3 = reduce_decode_grad(3, pos=pos_3)
-        emb_3.backward(ge3)
-        optimizer_3.step()
-        total_time_3 += (time.time() - st)
+        ge = []
+        for i in range(len(client_id_list)):
+            st = time.time()
+            ge.append(reduce_decode_grad(client_id_list[i], pos=pos[i]))
+            emb[i].backward(ge[i])
+            client_optimizer[i].step()
+            total_time[i] += (time.time() - st)
 
         
         ###################
         # Statistics
         ###################
-        epoch_count_send_1 += 1
-        epoch_count_send_2 += 1
-        epoch_count_send_3 += 1
-        epoch_count_receive_1 += 1
-        epoch_count_receive_2 += 1
-        epoch_count_receive_3 += 1
+        for i in range(len(client_id_list)):
+            epoch_count_send[i] += 1
+            epoch_count_receive[i] += 1
 
-        # Practical size
-        epoch_size_send_1    += os.path.getsize(f'{comm_dir}/tr_emb_1.pt')
-        epoch_size_send_2    += os.path.getsize(f'{comm_dir}/tr_emb_2.pt')
-        epoch_size_send_3    += os.path.getsize(f'{comm_dir}/tr_emb_3.pt')
-        epoch_size_receive_1 += os.path.getsize(f'{comm_dir}/ge1.pt')
-        epoch_size_receive_2 += os.path.getsize(f'{comm_dir}/ge2.pt')
-        epoch_size_receive_3 += os.path.getsize(f'{comm_dir}/ge3.pt')
+            # Practical size
+            epoch_size_send[i]    += os.path.getsize(f'{comm_dir}/tr_emb_{client_id_list[i]}.pt')
+            epoch_size_receive[i] += os.path.getsize(f'{comm_dir}/ge{client_id_list[i]}.pt')
         
-        # Theoretical size
-        epoch_size_send_1t    += size_e1t
-        epoch_size_send_2t    += size_e2t 
-        epoch_size_send_3t    += size_e3t
-        epoch_size_receive_1t += size_g1t
-        epoch_size_receive_2t += size_g2t
-        epoch_size_receive_3t += size_g3t
+            # Theoretical size
+            epoch_size_send_t[i]    += size_et[i]
+            epoch_size_receive_t[i] += size_gt[i]
         
-
-        # Count sparsity
-        tr_embed_sparsity += np.count_nonzero(np.abs(emb_1.detach().cpu().numpy()) <= sparse_embed_epsilon)
-        tr_embed_sparsity += np.count_nonzero(np.abs(emb_2.detach().cpu().numpy()) <= sparse_embed_epsilon)
-        tr_embed_sparsity += np.count_nonzero(np.abs(emb_3.detach().cpu().numpy()) <= sparse_embed_epsilon)
-        
-        tr_grad_sparsity  += np.count_nonzero(np.abs(ge1.detach().cpu().numpy()) <= sparse_grad_epsilon)
-        tr_grad_sparsity  += np.count_nonzero(np.abs(ge2.detach().cpu().numpy()) <= sparse_grad_epsilon)
-        tr_grad_sparsity  += np.count_nonzero(np.abs(ge3.detach().cpu().numpy()) <= sparse_grad_epsilon)
+            # Count sparsity
+            tr_embed_sparsity += np.count_nonzero(np.abs(emb[i].detach().cpu().numpy()) <= sparse_embed_epsilon)
+            tr_grad_sparsity  += np.count_nonzero(np.abs(ge[i].detach().cpu().numpy()) <= sparse_grad_epsilon)
     
     
     ##########################################################################
@@ -1183,19 +1045,11 @@ for epoch in range(n_epochs):
     va_batch_count = math.ceil(va_sample_count / batch_size)
     
     ###################
-    # Client 1
+    # Client 
     ###################
-    client_model_1.eval()
+    for i in range(len(client_id_list)):
+        client_model[i].eval()
     
-    ###################
-    # Client 2
-    ###################
-    client_model_2.eval()
-    
-    ###################
-    # Client 2
-    ###################
-    client_model_3.eval()
 
     ###################
     # Server
@@ -1218,43 +1072,36 @@ for epoch in range(n_epochs):
         batch_uid = va_uid[head:tail]
         
         ###################
-        # Client 1: Send
+        # Client: Send
         ###################
-        st = time.time()
-        batch_x_1 = va_x1[head:tail,:].to(device)
-        emb_1 = client_model_1(batch_x_1)
-        _, size_e1t = reduce_encode_emb(emb_1, 1, header='va')
-        total_time_1 += (time.time() - st)
+        emb = []
+        size_et = []
+        for i in range(len(client_id_list)):
+            st = time.time()
+            batch_x = va_x[i][head:tail,:].to(device)
+            emb.append(client_model[i](batch_x))
+            _, size_eit = reduce_encode_emb(emb[i], client_id_list[i], header='va')
+            total_time[i] += (time.time() - st)
+            
+            size_et.append(size_eit)
         
-        ###################
-        # Client 2
-        ###################
-        st = time.time()
-        batch_x_2 = va_x2[head:tail,:].to(device)
-        emb_2 = client_model_2(batch_x_2)
-        _, size_e2t = reduce_encode_emb(emb_2, 2, header='va')
-        total_time_2 += (time.time() - st)
-
-        ###################
-        # Client 3
-        ###################
-        st = time.time()
-        batch_x_3 = va_x3[head:tail,:].to(device)
-        emb_3 = client_model_3(batch_x_3)
-        _, size_e3t = reduce_encode_emb(emb_3, 3, header='va')
-        total_time_3 += (time.time() - st)
 
         ###################
         # Server: Receive, Send
         ###################
         st = time.time()
         batch_y   = va_y[head:tail,:].to(device)
-        e1, _ = reduce_decode_emb(1, header='va')
-        e2, _ = reduce_decode_emb(2, header='va')
-        e3, _ = reduce_decode_emb(3, header='va')
+        e = []
+        for i in range(len(client_id_list)):
+            ei, _ = reduce_decode_emb(client_id_list[i], header='va')
+            e.append(ei)
+            
+        e_all = e[0].clone()
+        for i in range(1, len(client_id_list)): 
+            e_all = torch.cat((e_all, e[i]), 1)
+        e_all = e_all.to(device)
         
-        emb = torch.cat((e1, e2, e3), 1).to(device)
-        pred_y = server_model(emb)
+        pred_y = server_model(e_all)
         loss = criterion(pred_y, batch_y)
         va_loss += loss.item()
         
@@ -1273,48 +1120,29 @@ for epoch in range(n_epochs):
         ###################
         # Statistics
         ###################
-        epoch_count_send_1 += 1
-        epoch_count_send_2 += 1
-        epoch_count_send_3 += 1
+        for i in range(len(client_id_list)):
+            epoch_count_send[i] += 1
+            # Practical size
+            epoch_size_send[i] += os.path.getsize(f'{comm_dir}/va_emb_{client_id_list[i]}.pt')
+            # Theoretical size
+            epoch_size_send_t[i]    += size_et[i]
 
-        # Practical size
-        epoch_size_send_1 += os.path.getsize(f'{comm_dir}/va_emb_1.pt')
-        epoch_size_send_2 += os.path.getsize(f'{comm_dir}/va_emb_2.pt')
-        epoch_size_send_3 += os.path.getsize(f'{comm_dir}/va_emb_3.pt')
-        # Theoretical size
-        epoch_size_send_1t    += size_e1t
-        epoch_size_send_2t    += size_e2t 
-        epoch_size_send_3t    += size_e3t
-
-        # Count sparsity
-        va_embed_sparsity += np.count_nonzero(np.abs(emb_1.detach().cpu().numpy()) <= sparse_embed_epsilon)
-        va_embed_sparsity += np.count_nonzero(np.abs(emb_2.detach().cpu().numpy()) <= sparse_embed_epsilon)
-        va_embed_sparsity += np.count_nonzero(np.abs(emb_3.detach().cpu().numpy()) <= sparse_embed_epsilon)
+            # Count sparsity
+            va_embed_sparsity += np.count_nonzero(np.abs(emb[i].detach().cpu().numpy()) <= sparse_embed_epsilon)
 
         
     ###################
     # Statistics
     ###################
-    total_count_send_1    += epoch_count_send_1
-    total_count_send_2    += epoch_count_send_2
-    total_count_send_3    += epoch_count_send_3
-    total_count_receive_1 += epoch_count_receive_1
-    total_count_receive_2 += epoch_count_receive_2
-    total_count_receive_3 += epoch_count_receive_3
-    
-    total_size_send_1    += epoch_size_send_1
-    total_size_send_2    += epoch_size_send_2
-    total_size_send_3    += epoch_size_send_3
-    total_size_receive_1 += epoch_size_receive_1
-    total_size_receive_2 += epoch_size_receive_2
-    total_size_receive_3 += epoch_size_receive_3
+    for i in range(len(client_id_list)):
+        total_count_send[i]    += epoch_count_send[i]
+        total_count_receive[i] += epoch_count_receive[i]
 
-    total_size_send_1t    += epoch_size_send_1t
-    total_size_send_2t    += epoch_size_send_2t
-    total_size_send_3t    += epoch_size_send_3t
-    total_size_receive_1t += epoch_size_receive_1t
-    total_size_receive_2t += epoch_size_receive_2t
-    total_size_receive_3t += epoch_size_receive_3t
+        total_size_send[i]    += epoch_size_send[i]
+        total_size_receive[i] += epoch_size_receive[i]
+
+        total_size_send_t[i]    += epoch_size_send_t[i]
+        total_size_receive_t[i] += epoch_size_receive_t[i]
     
     # total Loss
     tr_loss /= tr_batch_count
@@ -1324,10 +1152,11 @@ for epoch in range(n_epochs):
     tr_sparse_embed_loss /= tr_batch_count
         
     # Embed Sparsity
-    tr_embed_sparsity /= (tr_sample_count * (dim_1 + dim_2 + dim_3))
-    va_embed_sparsity /= (va_sample_count * (dim_1 + dim_2 + dim_3))
+    
+    tr_embed_sparsity /= (tr_sample_count * sum([d for d in dim]))
+    va_embed_sparsity /= (va_sample_count * sum([d for d in dim]))
     # Grad sparsity
-    tr_grad_sparsity /= (tr_sample_count * (dim_1 + dim_2 + dim_3))
+    tr_grad_sparsity /= (tr_sample_count * sum([d for d in dim]))
     
     # auc
     if args.loss=='bcewll':
@@ -1345,29 +1174,18 @@ for epoch in range(n_epochs):
     
     writer.add_scalar('tr/loss', tr_loss, epoch)
     writer.add_scalar('va/loss', va_loss, epoch)
-    writer.add_scalar('stat_count/epoch_count_send_1',    epoch_count_send_1, epoch)
-    writer.add_scalar('stat_count/epoch_count_send_2',    epoch_count_send_2, epoch)
-    writer.add_scalar('stat_count/epoch_count_send_3',    epoch_count_send_3, epoch)
-    writer.add_scalar('stat_count/epoch_count_receive_1', epoch_count_receive_1, epoch)
-    writer.add_scalar('stat_count/epoch_count_receive_2', epoch_count_receive_2, epoch)
-    writer.add_scalar('stat_count/epoch_count_receive_3', epoch_count_receive_3, epoch)
-    writer.add_scalar('stat_count/epoch_count_all', epoch_count_send_1 + epoch_count_send_2 + epoch_count_send_3 + epoch_count_receive_1 + epoch_count_receive_2 + epoch_count_receive_3, epoch)
+    for i in range(len(client_id_list)):
+        writer.add_scalar(f'stat_count/epoch_count_send_{client_id_list[i]}',      epoch_count_send[i],     epoch)
+        writer.add_scalar(f'stat_count/epoch_count_receive_{client_id_list[i]}',   epoch_count_receive[i],  epoch)
+        writer.add_scalar(f'stat_size/epoch_size_send_{client_id_list[i]}',        epoch_size_send[i],      epoch)
+        writer.add_scalar(f'stat_size/epoch_size_receive_{client_id_list[i]}',     epoch_size_receive[i],   epoch)
+        writer.add_scalar(f'stat_size_t/epoch_size_send_{client_id_list[i]}t',     epoch_size_send_t[i],    epoch)
+        writer.add_scalar(f'stat_size_t/epoch_size_receive_{client_id_list[i]}t',  epoch_size_receive_t[i], epoch)
     
-    writer.add_scalar('stat_size/epoch_size_send_1',     epoch_size_send_1, epoch)
-    writer.add_scalar('stat_size/epoch_size_send_2',     epoch_size_send_2, epoch)
-    writer.add_scalar('stat_size/epoch_size_send_3',     epoch_size_send_3, epoch)
-    writer.add_scalar('stat_size/epoch_size_receive_1',  epoch_size_receive_1, epoch)
-    writer.add_scalar('stat_size/epoch_size_receive_2',  epoch_size_receive_2, epoch)
-    writer.add_scalar('stat_size/epoch_size_receive_3',  epoch_size_receive_3, epoch)
-    writer.add_scalar('stat_size/epoch_size_all', epoch_size_send_1 + epoch_size_send_2 + epoch_size_send_3 + epoch_size_receive_1 + epoch_size_receive_2 + epoch_size_receive_3, epoch)
+    writer.add_scalar('stat_count/epoch_count_all', sum([d for d in epoch_count_send]) + sum([d for d in epoch_count_receive]), epoch)
+    writer.add_scalar('stat_size/epoch_size_all',   sum([d for d in epoch_size_send])  + sum([d for d in epoch_size_receive]),  epoch)
 
-    writer.add_scalar('stat_size_t/epoch_size_send_1t',     epoch_size_send_1t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_send_2t',     epoch_size_send_2t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_send_3t',     epoch_size_send_3t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_receive_1t',  epoch_size_receive_1t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_receive_2t',  epoch_size_receive_2t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_receive_3t',  epoch_size_receive_3t, epoch)
-    writer.add_scalar('stat_size_t/epoch_size_allt', epoch_size_send_1t + epoch_size_send_2t + epoch_size_send_3t + epoch_size_receive_1t + epoch_size_receive_2t + epoch_size_receive_3t, epoch)
+    writer.add_scalar('stat_size_t/epoch_size_allt', sum([d for d in epoch_size_send_t]) + sum([d for d in epoch_size_receive_t]), epoch)
 
     writer.add_scalar('reg/tr_sparse_embed_loss_x_lambda', sparse_embed_lambda * tr_sparse_embed_loss, epoch) # with sparse_lambda
     writer.add_scalar('reg/tr_embed_sparsity', tr_embed_sparsity, epoch)
@@ -1383,13 +1201,9 @@ for epoch in range(n_epochs):
         torch.save(server_model.state_dict(), model_name)
         patience_counter = 0
         
-        model_name = f'{model_dir}/{model_header}_client_model_1.pt'
-        torch.save(client_model_1.state_dict(), model_name)
-        model_name = f'{model_dir}/{model_header}_client_model_2.pt'
-        torch.save(client_model_2.state_dict(), model_name)
-        model_name = f'{model_dir}/{model_header}_client_model_3.pt'
-        torch.save(client_model_3.state_dict(), model_name)
-        
+        for i in range(len(client_id_list)):
+            model_name = f'{model_dir}/{model_header}_client_model_{client_id_list[i]}.pt'
+            torch.save(client_model[i].state_dict(), model_name)        
 
     else:
         if early_stopping:
@@ -1411,49 +1225,29 @@ writer.flush()
 ###################
 # Statistics
 ###################
-print(f'total_count_send_1: {total_count_send_1}')
-print(f'total_count_send_2: {total_count_send_2}')
-print(f'total_count_send_3: {total_count_send_3}')
-print(f'total_count_receive_1: {total_count_receive_1}')
-print(f'total_count_receive_2: {total_count_receive_2}')
-print(f'total_count_receive_3: {total_count_receive_3}')
-print('-'*10)
-print(f'total_size_send_1: {total_size_send_1/2**30:.3f}')
-print(f'total_size_send_2: {total_size_send_2/2**30:.3f}')
-print(f'total_size_send_3: {total_size_send_3/2**30:.3f}')
-print(f'total_size_receive_1: {total_size_receive_1/2**30:.3f}')
-print(f'total_size_receive_2: {total_size_receive_2/2**30:.3f}')
-print(f'total_size_receive_3: {total_size_receive_3/2**30:.3f}')
-print('-'*10)
-print(f'total_size_send_1t: {total_size_send_1t/2**30:.3f}')
-print(f'total_size_send_2t: {total_size_send_2t/2**30:.3f}')
-print(f'total_size_send_3t: {total_size_send_3t/2**30:.3f}')
-print(f'total_size_receive_1t: {total_size_receive_1t/2**30:.3f}')
-print(f'total_size_receive_2t: {total_size_receive_2t/2**30:.3f}')
-print(f'total_size_receive_3t: {total_size_receive_3t/2**30:.3f}')
-print('-'*10)
-total_count_all = total_count_send_1 + total_count_send_2 + total_count_send_3 + total_count_receive_1 + total_count_receive_2  + total_count_receive_2
-total_size_all   = total_size_send_1  + total_size_send_2  + total_size_send_3  + total_size_receive_1  + total_size_receive_2  + total_size_receive_3
-total_size_allt  = total_size_send_1t + total_size_send_2t + total_size_send_3t + total_size_receive_1t + total_size_receive_2t + total_size_receive_3t
+for i in range(len(client_id_list)):
+    print(f'total_count_send_{client_id_list[i]}: {total_count_send[i]}')
+    print(f'total_count_receive_{client_id_list[i]}: {total_count_receive[i]}')
+    print(f'total_size_send_{client_id_list[i]}: {total_size_send[i]/2**30:.3f}')
+    print(f'total_size_receive_{client_id_list[i]}: {total_size_receive[i]/2**30:.3f}')    
+    print(f'total_size_send_{client_id_list[i]}t: {total_size_send_t[i]/2**30:.3f}')
+    print(f'total_size_receive_{client_id_list[i]}t: {total_size_receive_t[i]/2**30:.3f}')
+    
+    writer.add_scalar(f'final/total_size_send_{client_id_list[i]}', total_size_send[i]/2**30)
+    writer.add_scalar(f'final/total_size_receive_{client_id_list[i]}', total_size_receive[i]/2**30)
+    writer.add_scalar(f'theoretical/total_size_send_{client_id_list[i]}t', total_size_send_t[i]/2**30)
+    writer.add_scalar(f'theoretical/total_size_receive_{client_id_list[i]}t', total_size_receive_t[i]/2**30)
+
+
+total_count_all  = sum([d for d in total_count_send])   + sum([d for d in total_count_receive])
+total_size_all   = sum([d for d in total_size_send])    + sum([d for d in total_size_receive])
+total_size_allt  = sum([d for d in total_size_send_t])  + sum([d for d in total_size_receive_t])
 print(f'total_count_all: {total_count_all}')
 print(f'total_size_all: {(total_size_all)/2**30:.3f} [GB]')
 print(f'total_size_allt: {(total_size_allt)/2**30:.3f} [GB]')
 print(f'bandwidth: {(total_size_all/total_count_all)/2**10:.3f} [KB/comm]')
 
 
-writer.add_scalar('final/total_size_send_1', total_size_send_1/2**30)
-writer.add_scalar('final/total_size_send_2', total_size_send_2/2**30)
-writer.add_scalar('final/total_size_send_3', total_size_send_3/2**30)
-writer.add_scalar('final/total_size_receive_1', total_size_receive_1/2**30)
-writer.add_scalar('final/total_size_receive_2', total_size_receive_2/2**30)
-writer.add_scalar('final/total_size_receive_3', total_size_receive_3/2**30)
-
-writer.add_scalar('theoretical/total_size_send_1t', total_size_send_1t/2**30)
-writer.add_scalar('theoretical/total_size_send_2t', total_size_send_2t/2**30)
-writer.add_scalar('theoretical/total_size_send_3t', total_size_send_3t/2**30)
-writer.add_scalar('theoretical/total_size_receive_1t', total_size_receive_1t/2**30)
-writer.add_scalar('theoretical/total_size_receive_2t', total_size_receive_2t/2**30)
-writer.add_scalar('theoretical/total_size_receive_3t', total_size_receive_3t/2**30)
 
 writer.flush()
 
@@ -1466,9 +1260,8 @@ writer.flush()
 print('Best model')
 print(f'best_va_score: {best_va_score}')
 print(f'{model_dir}/{model_header}_server_model.pt')
-print(f'{model_dir}/{model_header}_client_model_1.pt')
-print(f'{model_dir}/{model_header}_client_model_2.pt')
-print(f'{model_dir}/{model_header}_client_model_3.pt')
+for i in range(len(client_id_list)):
+    print(f'{model_dir}/{model_header}_client_model_{client_id_list[i]}.pt')
 
 # Test data
 if args.data_format == 'paper':
@@ -1480,12 +1273,11 @@ if args.data_format == 'paper':
     ds_te = Dataset3(te_feature, te_label[0], te_indices[0], te_f_col, te_l_col[0])
 
     te_uid = ds_te.indices
-    te_x1 = ds_te.x_list[0]
-    te_x2 = ds_te.x_list[1]
-    te_x3 = ds_te.x_list[2]
-    te_xcols1 = ds_te.xcols_list[0]
-    te_xcols2 = ds_te.xcols_list[1]
-    te_xcols3 = ds_te.xcols_list[2]
+    te_x = []
+    te_xcols = []
+    for i in range(len(client_id_list)):
+        te_x.append(ds_te.x_list[i])
+        te_xcols.append(ds_te.xcols_list[i])
     te_y = ds_te.y
 
 elif args.data_format == 'aws':
@@ -1493,15 +1285,12 @@ elif args.data_format == 'aws':
     te_uid = torch.LongTensor(np.load(f"{data_dir}/test/te_uid.npy", allow_pickle=False))
     
     # Client
-    te_x1 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_1.npy", allow_pickle=False))
-    te_x2 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_2.npy", allow_pickle=False))
-    te_x3 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_3.npy", allow_pickle=False))
-#     te_x4 = torch.FloatTensor(np.load(f"{data_dir}/test/te_x_4.npy", allow_pickle=False))
-    te_xcols1 = np.load(f"{data_dir}/test/cols_1.npy", allow_pickle=False)
-    te_xcols2 = np.load(f"{data_dir}/test/cols_2.npy", allow_pickle=False)
-    te_xcols3 = np.load(f"{data_dir}/test/cols_3.npy", allow_pickle=False)
-#     te_xcols4 = np.load(f"{data_dir}/test/cols_4.npy", allow_pickle=False)
-
+    te_x = []
+    te_xcols = []
+    for i in range(len(client_id_list)):
+        te_x.append(torch.FloatTensor(np.load(f"{data_dir}/test/te_x_{client_id_list[i]}.npy", allow_pickle=False)))
+        te_xcols.append(np.load(f"{data_dir}/test/cols_{client_id_list[i]}.npy", allow_pickle=False))
+        
     # Server
     te_y = torch.Tensor(np.load(f"{data_dir}/test/te_y.npy", allow_pickle=False))
 
@@ -1512,25 +1301,12 @@ te_sample_count = len(te_uid)
 te_batch_count = math.ceil(te_sample_count / batch_size)
 
 ###################
-# Client 1
+# Client 
 ###################
-client_model_1.load_state_dict(torch.load(f'{model_dir}/{model_header}_client_model_1.pt'))
-client_model_1 = client_model_1.to(device)
-client_model_1.eval()
-
-###################
-# Client 2
-###################
-client_model_2.load_state_dict(torch.load(f'{model_dir}/{model_header}_client_model_2.pt'))
-client_model_2 = client_model_2.to(device)
-client_model_2.eval()
-
-###################
-# Client 3
-###################
-client_model_3.load_state_dict(torch.load(f'{model_dir}/{model_header}_client_model_3.pt'))
-client_model_3 = client_model_3.to(device)
-client_model_3.eval()
+for i in range(len(client_id_list)):
+    client_model[i].load_state_dict(torch.load(f'{model_dir}/{model_header}_client_model_{client_id_list[i]}.pt'))
+    client_model[i] = client_model[i].to(device)
+    client_model[i].eval()
 
 ###################
 # Server
@@ -1556,35 +1332,29 @@ for batch_index in tqdm(range(te_batch_count)):
     batch_uid = te_uid[head:tail]
 
     ###################
-    # Client 1: Send
+    # Client: Send
     ###################
-    batch_x_1 = te_x1[head:tail,:].to(device)
-    emb_1 = client_model_1(batch_x_1)
-    reduce_encode_emb(emb_1, 1, header='te')
+    emb = []
+    for i in range(len(client_id_list)):
+        batch_x = te_x[i][head:tail,:].to(device)
+        emb.append(client_model[i](batch_x))
+        reduce_encode_emb(emb[i], client_id_list[i], header='te')
 
-    ###################
-    # Client 2: Send
-    ###################
-    batch_x_2 = te_x2[head:tail,:].to(device)
-    emb_2 = client_model_2(batch_x_2)
-    reduce_encode_emb(emb_2, 2, header='te')
-
-    ###################
-    # Client 3: Send
-    ###################
-    batch_x_3 = te_x3[head:tail,:].to(device)
-    emb_3 = client_model_3(batch_x_3)
-    reduce_encode_emb(emb_3, 3, header='te')
 
     ###################
     # Server: Receive
     ###################
     batch_y   = te_y[head:tail,:].to(device) # Label
-    e1, _ = reduce_decode_emb(1, header='te')
-    e2, _ = reduce_decode_emb(2, header='te')
-    e3, _ = reduce_decode_emb(3, header='te')
-    emb = torch.cat((e1, e2, e3), 1).to(device) # Concat horizontally
-    pred_y = server_model(emb)
+    e = []
+    for i in range(len(client_id_list)):
+        ei, _ = reduce_decode_emb(client_id_list[i], header='te')
+        e.append(ei)
+        
+    e_all = e[0].clone()
+    for i in range(1, len(client_id_list)):
+        e_all = torch.cat((e_all, e[i]), 1)
+    e_all = e_all.to(device) # Concat horizontally
+    pred_y = server_model(e_all)
     
     if args.loss=='bcewll':
         te_pred[head:tail,:] = torch.sigmoid(pred_y).detach().cpu().numpy()
@@ -1598,9 +1368,8 @@ for batch_index in tqdm(range(te_batch_count)):
     ###################
     # Statistics
     ###################
-    te_embed_sparsity += np.count_nonzero(np.abs(emb_1.detach().cpu().numpy()) <= sparse_embed_epsilon)
-    te_embed_sparsity += np.count_nonzero(np.abs(emb_2.detach().cpu().numpy()) <= sparse_embed_epsilon)
-    te_embed_sparsity += np.count_nonzero(np.abs(emb_3.detach().cpu().numpy()) <= sparse_embed_epsilon)
+    for i in range(len(client_id_list)):
+        te_embed_sparsity += np.count_nonzero(np.abs(emb[i].detach().cpu().numpy()) <= sparse_embed_epsilon)
 
 ###################
 # Statistics
@@ -1614,7 +1383,7 @@ elif args.loss=='ce':
     print(f'te_macrof1: {te_score:.4f}')
     writer.add_scalar('final/te_macrof1',  te_score)
 
-te_embed_sparsity /= (te_sample_count * (dim_1 + dim_2 + dim_3))
+te_embed_sparsity /= (te_sample_count * sum(dim))
 print(f'te_sparsity: {te_embed_sparsity:.6f}')
 
 writer.add_scalar('final/te_embed_sparsity',  te_embed_sparsity)
@@ -1646,32 +1415,32 @@ result = pd.DataFrame({
     'sparse_embed_lambda': [args.sparse_embed_lambda],
     'sparse_grad_epsilon': [args.sparse_grad_epsilon],
     'top_k': [args.top_k],
-    
-    'total_size_send_1': [total_size_send_1],
-    'total_size_send_2': [total_size_send_2],
-    'total_size_send_3': [total_size_send_3],
-    'total_size_receive_1': [total_size_receive_1],
-    'total_size_receive_2': [total_size_receive_2],
-    'total_size_receive_3': [total_size_receive_3],
-    'total_size_all': [total_size_all],
-
-    'total_size_send_1t': [total_size_send_1t],
-    'total_size_send_2t': [total_size_send_2t],
-    'total_size_send_3t': [total_size_send_3t],
-    'total_size_receive_1t': [total_size_receive_1t],
-    'total_size_receive_2t': [total_size_receive_2t],
-    'total_size_receive_3t': [total_size_receive_3t],
-    'total_size_allt': [total_size_allt],
-
-    
-    'total_time_1': [total_time_1],
-    'total_time_2': [total_time_2],
-    'total_time_3': [total_time_3],
-    'total_time_s': [total_time_s],
-    'te_score': [te_score],
-    'te_embed_sparsity': [te_embed_sparsity],
-    'time': [end_time-start_time],
 })
+
+for i in range(len(client_id_list)):
+    result[f'total_size_send_{client_id_list[i]}'] = total_size_send[i]
+
+for i in range(len(client_id_list)):
+    result[f'total_size_receive_{client_id_list[i]}'] = total_size_receive[i]
+    
+result['total_size_all'] = total_size_all
+
+for i in range(len(client_id_list)):
+    result[f'total_size_send_{client_id_list[i]}t'] = total_size_send_t[i]
+    
+for i in range(len(client_id_list)):
+    result[f'total_size_receive_{client_id_list[i]}t'] = total_size_receive_t[i]
+
+result['total_size_allt'] = total_size_allt
+
+for i in range(len(client_id_list)):
+    result[f'total_time_{client_id_list[i]}'] = total_time[i]
+    
+result['total_time_s'] = total_time_s
+result['te_score'] = te_score
+result['te_embed_sparsity'] = te_embed_sparsity
+result['time'] = end_time-start_time
+
 
 if os.path.exists(args.tsv_name):
     result_all = pd.read_csv(args.tsv_name, delimiter='\t')
